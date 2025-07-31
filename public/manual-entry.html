@@ -235,37 +235,53 @@
         </div>
     </div>
 
-    <script>
-        document.getElementById('craneForm').addEventListener('submit', function(e) {
-            e.preventDefault();
-            
-            const craneId = document.getElementById('craneId').value;
-            const craneModel = document.getElementById('craneModel').value;
-            
-            // Add loading animation
-            const btn = this.querySelector('button[type="submit"]');
-            btn.innerHTML = '<span class="loader"></span> Searching...';
-            btn.disabled = true;
-            
-            // Simulate database search
-            setTimeout(() => {
-                // In a real app, you would validate the input here
-                window.location.href = 'error-info.html?craneId=' + encodeURIComponent(craneId);
-            }, 1500);
-        });
+   <script>
+    document.getElementById('craneForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
         
-        // Add floating animation to input when focused
-        document.getElementById('craneId').addEventListener('focus', function() {
-            this.classList.remove('floating');
-            this.style.transform = 'translateZ(10px)';
-        });
+        const code = document.getElementById('craneId').value.trim();
+        if (!code) {
+            alert("Please enter a Crane ID or Error Code");
+            return;
+        }
         
-        document.getElementById('craneId').addEventListener('blur', function() {
-            if (!this.value) {
-                this.classList.add('floating');
+        const btn = this.querySelector('button[type="submit"]');
+        btn.innerHTML = '<span class="loader"></span> Searching...';
+        btn.disabled = true;
+        
+        try {
+            const res = await fetch(/api/crane/${encodeURIComponent(code)});
+            const data = await res.json();
+            
+            if (res.ok) {
+                // Show result inside the card
+                const resultHTML = `
+                    <div style="margin-top:20px; text-align:left;">
+                        <h3 style="color:var(--primary)">Error Details</h3>
+                        <p><b>Crane ID:</b> ${data.craneId}</p>
+                        <p><b>Model:</b> ${data.craneModel || 'N/A'}</p>
+                        <p><b>Error Code:</b> ${data.errorCode}</p>
+                        <p><b>Description:</b> ${data.errorDescription}</p>
+                        <p><b>Severity:</b> ${data.severity}</p>
+                        <p><b>Last Maintenance:</b> ${data.lastMaintenance}</p>
+                        <h4>Steps to Resolve:</h4>
+                        <ul>
+                          ${data.steps.map(s => <li><b>${s.title}</b>: ${s.description}</li>).join('')}
+                        </ul>
+                    </div>
+                `;
+                document.querySelector('.entry-card').insertAdjacentHTML('beforeend', resultHTML);
+            } else {
+                alert(data.message || "No matching data found");
             }
-            this.style.transform = 'translateZ(0)';
-        });
-    </script>
+        } catch (err) {
+            console.error(err);
+            alert("❌ Server error, please try again later.");
+        } finally {
+            btn.innerHTML = 'Search Error Database';
+            btn.disabled = false;
+        }
+    });
+</script>
 </body>
 </html>
