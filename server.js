@@ -1,9 +1,9 @@
 import express from "express";
 import mongoose from "mongoose";
 import bodyParser from "body-parser";
-import path from "path";
 import { fileURLToPath } from "url";
 import dotenv from "dotenv";
+import path from "path";
 
 dotenv.config();
 const app = express();
@@ -11,9 +11,9 @@ const PORT = process.env.PORT || 5000;
 
 // ✅ Middleware
 app.use(bodyParser.json());
-const _filename = fileURLToPath(import.meta.url);
-const _dirname = path.dirname(_filename);
-app.use(express.static(path.join(_dirname, "public")));
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+app.use(express.static(path.join(__dirname, "public")));
 
 // ✅ MongoDB Connect & Start Server after connection
 mongoose.connect(process.env.MONGO_URI, {
