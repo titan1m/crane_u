@@ -11,9 +11,9 @@ const PORT = process.env.PORT || 5000;
 
 // ✅ Middleware
 app.use(bodyParser.json());
-const __filename = fileURLToPath(import.meta.url);
+const _filename = fileURLToPath(import.meta.url);
 const _dirname = path.dirname(_filename);
-app.use(express.static(path.join(__dirname, "public")));
+app.use(express.static(path.join(_dirname, "public")));
 
 // ✅ MongoDB Connect & Start Server after connection
 mongoose.connect(process.env.MONGO_URI, {
