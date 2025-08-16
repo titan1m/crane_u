@@ -34,15 +34,23 @@ const UserSchema = new mongoose.Schema({
   password: String
 });
 
-// ✅ FIXED Crane Schema (match with your DB fields)
+// ✅ Crane Schema (extended safely, no data loss)
 const CraneSchema = new mongoose.Schema({
-  model: String,
-  code: String,
-  description: String,
+  model: String,            // Crane model
+  code: String,             // Error code
+  description: String,      // Error description
+  severity: String,         // NEW: e.g. Low / Medium / High
+  lastMaintenance: String,  // NEW: date string (last maintenance info)
+  steps: [                  // NEW: troubleshooting steps
+    {
+      title: String,
+      description: String
+    }
+  ],
   createdAt: { type: Date, default: Date.now }
 });
 
-// ✅ Models (force collection names: users & cranes)
+// ✅ Models
 const User = mongoose.model("User", UserSchema, "users");
 const Crane = mongoose.model("Crane", CraneSchema, "cranes");
 
@@ -90,7 +98,7 @@ app.post("/api/crane", async (req, res) => {
   }
 });
 
-// ✅ FIXED Fetch Crane Data by model OR code
+// ✅ Fetch Crane Data by model OR code
 app.get("/api/crane/:code", async (req, res) => {
   try {
     const query = {
@@ -113,7 +121,7 @@ app.get("/api/crane/:code", async (req, res) => {
   }
 });
 
-// Get All Cranes (for dashboard/reports)
+// Get All Cranes
 app.get("/api/cranes", async (req, res) => {
   try {
     const cranes = await Crane.find();
