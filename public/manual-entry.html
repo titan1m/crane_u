@@ -195,10 +195,34 @@
                 flex-direction: column;
             }
         }
+
+        /* Loader */
+        .loader {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid var(--primary);
+            border-radius: 50%;
+            width: 16px;
+            height: 16px;
+            animation: spin 1s linear infinite;
+            display: inline-block;
+            margin-right: 8px;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .result-box {
+            margin-top: 20px; 
+            padding: 15px; 
+            border-radius: 12px; 
+            background: #f8f9fa; 
+            border: 1px solid #e9ecef;
+        }
     </style>
 </head>
 <body>
-    <div class="header animate__animated animate__fadeIn">
+    <div class="header animate_animated animate_fadeIn">
         <div class="logo">
             <div class="logo-icon">CE</div>
             <h2>CraneError Pro</h2>
@@ -207,28 +231,31 @@
     </div>
     
     <div class="container">
-        <div class="entry-card animate__animated animate__zoomIn">
+        <div class="entry-card animate_animated animate_zoomIn">
             <h1>Enter Crane Details</h1>
             
             <form id="craneForm">
-                <div class="form-group animate__animated animate__fadeIn animate__delay-1s">
+                <div class="form-group animate_animated animatefadeIn animate_delay-1s">
                     <label for="craneId">Crane Identification Number</label>
                     <input type="text" id="craneId" class="form-control floating" placeholder="e.g. CRN-2023-001" required>
-                    <span class="input-icon">🏗️</span>
+                    <span class="input-icon">🏗</span>
                 </div>
                 
-                <div class="form-group animate__animated animate__fadeIn animate__delay-2s">
+                <div class="form-group animate_animated animatefadeIn animate_delay-2s">
                     <label for="craneModel">Crane Model (Optional)</label>
                     <input type="text" id="craneModel" class="form-control" placeholder="e.g. Tower Crane X-2000">
-                    <span class="input-icon">ℹ️</span>
+                    <span class="input-icon">ℹ</span>
                 </div>
                 
-                <button type="submit" class="btn btn-primary animate__animated animate__fadeIn animate__delay-3s">
+                <button type="submit" class="btn btn-primary animate_animated animatefadeIn animate_delay-3s">
                     Search Error Database
                 </button>
             </form>
+
+            <!-- Results will be shown here -->
+            <div id="result"></div>
             
-            <div class="action-buttons animate__animated animate__fadeIn animate__delay-4s">
+            <div class="action-buttons animate_animated animatefadeIn animate_delay-4s">
                 <button class="btn btn-outline" onclick="window.location.href='entry-mode.html'">Back</button>
                 <button class="btn btn-outline" onclick="window.location.href='index.html'">Home</button>
             </div>
@@ -248,15 +275,17 @@
         const btn = this.querySelector('button[type="submit"]');
         btn.innerHTML = '<span class="loader"></span> Searching...';
         btn.disabled = true;
+
+        const resultBox = document.getElementById("result");
+        resultBox.innerHTML = ""; // clear old result
         
         try {
             const res = await fetch(/api/crane/${encodeURIComponent(code)});
             const data = await res.json();
             
             if (res.ok) {
-                // Show result inside the card
                 const resultHTML = `
-                    <div style="margin-top:20px; text-align:left;">
+                    <div class="result-box animate_animated animate_fadeInUp">
                         <h3 style="color:var(--primary)">Error Details</h3>
                         <p><b>Crane ID:</b> ${data.craneId}</p>
                         <p><b>Model:</b> ${data.craneModel || 'N/A'}</p>
@@ -270,13 +299,13 @@
                         </ul>
                     </div>
                 `;
-                document.querySelector('.entry-card').insertAdjacentHTML('beforeend', resultHTML);
+                resultBox.innerHTML = resultHTML;
             } else {
-                alert(data.message || "No matching data found");
+                resultBox.innerHTML = <p style="color:red; margin-top:15px;">${data.message || "No matching data found"}</p>;
             }
         } catch (err) {
             console.error(err);
-            alert("❌ Server error, please try again later.");
+            resultBox.innerHTML = <p style="color:red; margin-top:15px;">❌ Server error, please try again later.</p>;
         } finally {
             btn.innerHTML = 'Search Error Database';
             btn.disabled = false;
