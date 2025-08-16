@@ -34,14 +34,11 @@ const UserSchema = new mongoose.Schema({
   password: String
 });
 
+// ✅ FIXED Crane Schema (match with your DB fields)
 const CraneSchema = new mongoose.Schema({
-  craneId: String,
-  craneModel: String,
-  errorCode: String,
-  errorDescription: String,
-  severity: String,
-  lastMaintenance: String,
-  steps: [Object],
+  model: String,
+  code: String,
+  description: String,
   createdAt: { type: Date, default: Date.now }
 });
 
@@ -93,20 +90,20 @@ app.post("/api/crane", async (req, res) => {
   }
 });
 
-// Fetch Crane Data by craneId OR errorCode
+// ✅ FIXED Fetch Crane Data by model OR code
 app.get("/api/crane/:code", async (req, res) => {
   try {
     const query = {
       $or: [
-        { craneId: req.params.code },
-        { errorCode: req.params.code }
+        { code: req.params.code },   // Match by error code
+        { model: req.params.code }   // Or by model name
       ]
     };
 
     const crane = await Crane.findOne(query);
 
     if (!crane) {
-      return res.status(404).json({ message: "❌ No data found for this ID or Error Code" });
+      return res.status(404).json({ message: "❌ No data found for this model or error code" });
     }
 
     res.status(200).json(crane);
