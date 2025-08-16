@@ -263,54 +263,62 @@
     </div>
 
    <script>
-    document.getElementById('craneForm').addEventListener('submit', async function(e) {
-        e.preventDefault();
-        
-        const code = document.getElementById('craneId').value.trim();
-        if (!code) {
-            alert("Please enter a Crane ID or Error Code");
-            return;
-        }
-        
-        const btn = this.querySelector('button[type="submit"]');
-        btn.innerHTML = '<span class="loader"></span> Searching...';
-        btn.disabled = true;
+document.getElementById('craneForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
 
-        const resultBox = document.getElementById("result");
-        resultBox.innerHTML = ""; // clear old result
-        
-        try {
-            const res = await fetch(/api/crane/${encodeURIComponent(code)});
-            const data = await res.json();
-            
-            if (res.ok) {
-                const resultHTML = `
-                    <div class="result-box animate_animated animate_fadeInUp">
-                        <h3 style="color:var(--primary)">Error Details</h3>
-                        <p><b>Crane ID:</b> ${data.craneId}</p>
-                        <p><b>Model:</b> ${data.craneModel || 'N/A'}</p>
-                        <p><b>Error Code:</b> ${data.errorCode}</p>
-                        <p><b>Description:</b> ${data.errorDescription}</p>
-                        <p><b>Severity:</b> ${data.severity}</p>
-                        <p><b>Last Maintenance:</b> ${data.lastMaintenance}</p>
-                        <h4>Steps to Resolve:</h4>
-                        <ul>
-                          ${data.steps.map(s => <li><b>${s.title}</b>: ${s.description}</li>).join('')}
-                        </ul>
-                    </div>
-                `;
-                resultBox.innerHTML = resultHTML;
-            } else {
-                resultBox.innerHTML = <p style="color:red; margin-top:15px;">${data.message || "No matching data found"}</p>;
-            }
-        } catch (err) {
-            console.error(err);
-            resultBox.innerHTML = <p style="color:red; margin-top:15px;">❌ Server error, please try again later.</p>;
-        } finally {
-            btn.innerHTML = 'Search Error Database';
-            btn.disabled = false;
+    const code = document.getElementById('craneId').value.trim();
+    if (!code) {
+        alert("Please enter a Crane ID or Error Code");
+        return;
+    }
+
+    const btn = this.querySelector('button[type="submit"]');
+    btn.innerHTML = '🔎 Searching...';
+    btn.disabled = true;
+
+    // Result box (same page)
+    let resultBox = document.getElementById("result");
+    if (!resultBox) {
+        resultBox = document.createElement("div");
+        resultBox.id = "result";
+        resultBox.style.marginTop = "20px";
+        resultBox.style.textAlign = "left";
+        document.querySelector(".entry-card").appendChild(resultBox);
+    }
+    resultBox.innerHTML = ""; // Clear old result
+
+    try {
+        // ✅ Correct fetch syntax
+        const res = await fetch(/api/crane/${encodeURIComponent(code)});
+        const data = await res.json();
+
+        if (res.ok) {
+            resultBox.innerHTML = `
+                <h3 style="color:var(--primary)">Error Details</h3>
+                <p><b>Crane ID:</b> ${data._id}</p>
+                <p><b>Model:</b> ${data.model || 'N/A'}</p>
+                <p><b>Error Code:</b> ${data.code}</p>
+                <p><b>Description:</b> ${data.description}</p>
+                <p><b>Severity:</b> ${data.severity || 'N/A'}</p>
+                <p><b>Last Maintenance:</b> ${data.lastMaintenance || 'N/A'}</p>
+                <h4>Steps to Resolve:</h4>
+                <ul>
+                    ${(data.steps || []).map(s => <li><b>${s.title}</b>: ${s.description}</li>).join('')}
+                </ul>
+            `;
+        } else {
+            resultBox.innerHTML = <p style="color:red">${data.message || "No matching data found"}</p>;
         }
-    });
+    } catch (err) {
+        console.error(err);
+        resultBox.innerHTML = <p style="color:red">❌ Server error, please try again later.</p>;
+    } finally {
+        btn.innerHTML = 'Search Error Database';
+        btn.disabled = false;
+    }
+});
 </script>
+    
 </body>
 </html>
+
