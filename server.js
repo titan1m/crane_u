@@ -6,14 +6,12 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 
 dotenv.config();
-
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// Middleware
 app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
@@ -27,33 +25,22 @@ const craneSchema = new mongoose.Schema({
     steps: [{ title: String, description: String, image: String }],
     lastMaintenance: { type: Date, default: Date.now }
 });
-
 const Crane = mongoose.model('Crane', craneSchema);
 
 const userSchema = new mongoose.Schema({
     username: { type: String, required: true, unique: true },
     password: { type: String, required: true }
 });
-
 const User = mongoose.model('User', userSchema);
 
-// Serve HTML files
-app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'index.html'));
-});
+// Serve HTML
+app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
+app.get('/error-info.html', (req, res) => res.sendFile(path.join(__dirname, 'public', 'error-info.html')));
 
-app.get('/error-info.html', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'error-info.html'));
-});
-
-// API Routes
+// API
 app.get('/api/cranes', async (req, res) => {
-    try {
-        const cranes = await Crane.find();
-        res.json(cranes);
-    } catch (error) {
-        res.status(500).json({ message: error.message });
-    }
+    try { const cranes = await Crane.find(); res.json(cranes); } 
+    catch (err) { res.status(500).json({ message: err.message }); }
 });
 
 app.get('/api/crane/:code', async (req, res) => {
@@ -61,23 +48,18 @@ app.get('/api/crane/:code', async (req, res) => {
         const crane = await Crane.findOne({ code: req.params.code });
         if (!crane) return res.status(404).json({ message: 'Crane not found' });
         res.json(crane);
-    } catch (error) {
-        res.status(500).json({ message: error.message });
-    }
+    } catch (err) { res.status(500).json({ message: err.message }); }
 });
 
-// Auth Routes
+// Auth
 app.post('/api/auth/signup', async (req, res) => {
     try {
         const { username, password } = req.body;
-        const existingUser = await User.findOne({ username });
-        if (existingUser) return res.status(400).json({ message: 'User already exists' });
-        const user = new User({ username, password }); // For production, hash password!
+        if(await User.findOne({ username })) return res.status(400).json({ message: 'User exists' });
+        const user = new User({ username, password });
         await user.save();
-        res.status(201).json({ message: 'User created successfully' });
-    } catch (error) {
-        res.status(500).json({ message: error.message });
-    }
+        res.status(201).json({ message: 'User created' });
+    } catch(err){ res.status(500).json({ message: err.message }); }
 });
 
 app.post('/api/auth/login', async (req, res) => {
@@ -87,47 +69,23 @@ app.post('/api/auth/login', async (req, res) => {
         if (!user) return res.status(401).json({ message: 'Invalid credentials' });
         const token = Buffer.from(`${username}:${Date.now()}`).toString('base64');
         res.json({ token, message: 'Login successful' });
-    } catch (error) {
-        res.status(500).json({ message: error.message });
-    }
+    } catch(err){ res.status(500).json({ message: err.message }); }
 });
 
 // Seed sample data
 app.post('/api/seed', async (req, res) => {
     try {
         const sampleCranes = [
-            {
-                code: "CRN-2023-001",
-                model: "Tower Crane X-2000",
-                description: "Hydraulic pressure has dropped below the minimum operational threshold",
-                severity: "high",
-                steps: [
-                    { title: "Check Hydraulic Fluid Level", description: "Locate the hydraulic fluid reservoir and check the fluid level" },
-                    { title: "Inspect for Leaks", description: "Visually inspect all hydraulic lines for signs of leakage" }
-                ]
-            },
-            {
-                code: "CRN-2023-002",
-                model: "Mobile Crane Y-500",
-                description: "Boom angle sensor providing inconsistent readings",
-                severity: "medium",
-                steps: [
-                    { title: "Inspect Sensor Connections", description: "Check all electrical connections for corrosion or looseness" }
-                ]
-            }
+            { code:"CRN-2023-001", model:"Tower Crane X-2000", description:"Hydraulic pressure low", severity:"high", steps:[{title:"Check Hydraulic Fluid", description:"Inspect fluid level"},{title:"Check Leaks", description:"Inspect all hydraulic lines"}] },
+            { code:"CRN-2023-002", model:"Mobile Crane Y-500", description:"Boom sensor inconsistent", severity:"medium", steps:[{title:"Check Connections", description:"Inspect electrical connections"}] }
         ];
         await Crane.deleteMany({});
         await Crane.insertMany(sampleCranes);
-        res.json({ message: 'Sample data added successfully' });
-    } catch (error) {
-        res.status(500).json({ message: error.message });
-    }
+        res.json({ message:'Sample data added' });
+    } catch(err){ res.status(500).json({ message: err.message }); }
 });
 
-// Connect MongoDB & Start Server
+// MongoDB connection & server start
 mongoose.connect(process.env.MONGO_URI)
-    .then(() => {
-        console.log('✅ MongoDB Connected');
-        app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
-    })
-    .catch((error) => console.error('❌ MongoDB connection error:', error));
+    .then(()=> app.listen(PORT, ()=> console.log(`Server running on port ${PORT}`)))
+    .catch(err=> console.error('MongoDB error:', err));
