@@ -1,3 +1,98 @@
+/* Data Management Styles */
+.data-management-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    gap: 2rem;
+    margin-top: 2rem;
+}
+
+.sample-options {
+    display: flex;
+    gap: 1rem;
+    margin: 1.5rem 0;
+    flex-wrap: wrap;
+}
+
+.data-preview {
+    background: #f8f9fa;
+    padding: 1rem;
+    border-radius: var(--border-radius);
+    margin-top: 1rem;
+}
+
+.data-preview ul {
+    margin: 0.5rem 0;
+    padding-left: 1.5rem;
+}
+
+.data-preview li {
+    margin-bottom: 0.25rem;
+}
+
+.quick-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.data-status {
+    min-height: 100px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.status-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+    width: 100%;
+}
+
+.status-item {
+    text-align: center;
+    padding: 1rem;
+    background: #f8f9fa;
+    border-radius: var(--border-radius);
+}
+
+.status-number {
+    display: block;
+    font-size: 2rem;
+    font-weight: bold;
+    color: var(--primary);
+}
+
+.status-label {
+    font-size: 0.9rem;
+    color: var(--gray);
+}
+
+.data-actions {
+    display: flex;
+    gap: 1rem;
+    margin-top: 1.5rem;
+    flex-wrap: wrap;
+}
+
+.sample-preview {
+    min-height: 150px;
+}
+
+.preview-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.preview-item {
+    padding: 0.75rem;
+    background: #f8f9fa;
+    border-radius: var(--border-radius);
+    border-left: 4px solid var(--primary);
+}
+
+/* Global reset - added */
 * {
     margin: 0;
     padding: 0;
@@ -601,38 +696,10 @@ body {
     font-weight: bold;
 }
 
-/* QR Scanner Enhancements */
+/* Scanner & Help */
 .scanner-card {
     max-width: 500px;
     margin: 0 auto 2rem;
-}
-
-.scanner-frame {
-    position: relative;
-    display: inline-block;
-    margin: 1rem 0;
-}
-
-.scanner-frame::before, .scanner-frame::after {
-    content: '';
-    position: absolute;
-    width: 40px;
-    height: 40px;
-    border: 3px solid var(--primary);
-}
-
-.scanner-frame::before {
-    top: 0;
-    left: 0;
-    border-right: none;
-    border-bottom: none;
-}
-
-.scanner-frame::after {
-    bottom: 0;
-    right: 0;
-    border-left: none;
-    border-top: none;
 }
 
 .scanner-actions {
@@ -914,6 +981,22 @@ body {
 
 /* Responsive Design */
 @media (max-width: 768px) {
+    .data-management-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .sample-options {
+        flex-direction: column;
+    }
+    
+    .status-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .data-actions {
+        flex-direction: column;
+    }
+
     .nav-container {
         flex-direction: column;
         gap: 1rem;
