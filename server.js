@@ -33,7 +33,6 @@ const userSchema = new mongoose.Schema({
     password: { type: String, required: true },
     createdAt: { type: Date, default: Date.now }
 });
-
 const User = mongoose.model('User', userSchema);
 
 // Crane Error Schema
@@ -49,7 +48,6 @@ const craneErrorSchema = new mongoose.Schema({
     resolvedAt: Date,
     notes: String
 });
-
 const CraneError = mongoose.model('CraneError', craneErrorSchema);
 
 // Authentication middleware
@@ -62,31 +60,26 @@ const requireAuth = (req, res, next) => {
 };
 
 // Routes
-
-// Serve main pages
 app.get('/', (req, res) => {
     res.redirect('/login.html');
 });
 
-// API Routes
+// ---------- AUTH ROUTES ---------- //
 
 // User registration
 app.post('/api/signup', async (req, res) => {
     try {
         const { username, email, password } = req.body;
-        
-        const existingUser = await User.findOne({ 
-            $or: [{ email }, { username }] 
-        });
-        
+        const existingUser = await User.findOne({ $or: [{ email }, { username }] });
+
         if (existingUser) {
             return res.status(400).json({ error: 'User already exists' });
         }
-        
+
         const hashedPassword = await bcrypt.hash(password, 12);
         const user = new User({ username, email, password: hashedPassword });
         await user.save();
-        
+
         req.session.userId = user._id;
         res.json({ success: true, message: 'User created successfully' });
     } catch (error) {
@@ -98,17 +91,13 @@ app.post('/api/signup', async (req, res) => {
 app.post('/api/login', async (req, res) => {
     try {
         const { email, password } = req.body;
-        
         const user = await User.findOne({ email });
-        if (!user) {
-            return res.status(400).json({ error: 'Invalid credentials' });
-        }
-        
+
+        if (!user) return res.status(400).json({ error: 'Invalid credentials' });
+
         const isMatch = await bcrypt.compare(password, user.password);
-        if (!isMatch) {
-            return res.status(400).json({ error: 'Invalid credentials' });
-        }
-        
+        if (!isMatch) return res.status(400).json({ error: 'Invalid credentials' });
+
         req.session.userId = user._id;
         req.session.username = user.username;
         res.json({ success: true, message: 'Login successful' });
@@ -132,31 +121,40 @@ app.get('/api/user', (req, res) => {
     }
 });
 
-// Crane Error API Routes
+// ---------- CRANE ERROR ROUTES ---------- //
 
 // Create new error report
 app.post('/api/errors', requireAuth, async (req, res) => {
     try {
-        const errorData = {
-            ...req.body,
-            reportedBy: req.session.username
-        };
-        
+        const errorData = { ...req.body, reportedBy: req.session.username };
         const error = new CraneError(errorData);
         await error.save();
-        res.json({ success: true, error: error });
+        res.json({ success: true, error });
     } catch (error) {
         res.status(500).json({ error: 'Failed to create error report' });
     }
 });
 
-// Get all errors
+// Get errors (with optional limit)
 app.get('/api/errors', requireAuth, async (req, res) => {
     try {
-        const errors = await CraneError.find().sort({ timestamp: -1 });
+        const { limit } = req.query;
+        let query = CraneError.find().sort({ timestamp: -1 });
+        if (limit) query = query.limit(parseInt(limit));
+        const errors = await query;
         res.json(errors);
     } catch (error) {
         res.status(500).json({ error: 'Failed to fetch errors' });
+    }
+});
+
+// Clear all errors
+app.delete('/api/errors', requireAuth, async (req, res) => {
+    try {
+        await CraneError.deleteMany({});
+        res.json({ success: true, message: 'All errors deleted' });
+    } catch (error) {
+        res.status(500).json({ error: 'Failed to clear errors' });
     }
 });
 
@@ -165,45 +163,30 @@ app.put('/api/errors/:id', requireAuth, async (req, res) => {
     try {
         const { status, notes } = req.body;
         const updateData = { status };
-        
-        if (status === 'Resolved') {
-            updateData.resolvedAt = new Date();
-        }
-        if (notes) {
-            updateData.notes = notes;
-        }
-        
-        const error = await CraneError.findByIdAndUpdate(
-            req.params.id, 
-            updateData, 
-            { new: true }
-        );
-        
-        res.json({ success: true, error: error });
+
+        if (status === 'Resolved') updateData.resolvedAt = new Date();
+        if (notes) updateData.notes = notes;
+
+        const error = await CraneError.findByIdAndUpdate(req.params.id, updateData, { new: true });
+        res.json({ success: true, error });
     } catch (error) {
         res.status(500).json({ error: 'Failed to update error' });
     }
 });
 
-// Get error statistics
+// Error statistics
 app.get('/api/stats', requireAuth, async (req, res) => {
     try {
         const totalErrors = await CraneError.countDocuments();
         const openErrors = await CraneError.countDocuments({ status: 'Open' });
         const inProgressErrors = await CraneError.countDocuments({ status: 'In Progress' });
         const resolvedErrors = await CraneError.countDocuments({ status: 'Resolved' });
-        
+
         const severityStats = await CraneError.aggregate([
             { $group: { _id: '$severity', count: { $sum: 1 } } }
         ]);
-        
-        res.json({
-            totalErrors,
-            openErrors,
-            inProgressErrors,
-            resolvedErrors,
-            severityStats
-        });
+
+        res.json({ totalErrors, openErrors, inProgressErrors, resolvedErrors, severityStats });
     } catch (error) {
         res.status(500).json({ error: 'Failed to fetch statistics' });
     }
