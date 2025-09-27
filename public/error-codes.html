@@ -34,33 +34,34 @@
                         <h3>🔍 Search Error Codes</h3>
                     </div>
                     <div class="card-body">
-                        <div class="search-controls">
-                            <div class="search-input-group">
-                                <input type="text" id="searchInput" placeholder="Enter error code (e.g., E001) or description" class="form-control">
-                                <button onclick="searchErrorCodes()" class="btn btn-primary">Search</button>
-                            </div>
-                            
-                            <div class="filter-options">
-                                <select id="errorTypeFilter" class="form-control">
-                                    <option value="">All Error Types</option>
-                                    <option value="Mechanical">Mechanical</option>
-                                    <option value="Electrical">Electrical</option>
-                                    <option value="Hydraulic">Hydraulic</option>
-                                    <option value="Software">Software</option>
-                                    <option value="Safety">Safety</option>
-                                </select>
-                                
-                                <select id="severityFilter" class="form-control">
-                                    <option value="">All Severities</option>
-                                    <option value="Low">Low</option>
-                                    <option value="Medium">Medium</option>
-                                    <option value="High">High</option>
-                                    <option value="Critical">Critical</option>
-                                </select>
-                                
-                                <button onclick="clearSearch()" class="btn btn-secondary">Clear</button>
-                            </div>
-                        </div>
+                        <!-- Update the search section in public/error-codes.html -->
+<div class="search-controls">
+    <div class="search-input-group">
+        <input type="text" id="searchInput" placeholder="Enter error code (e.g., E001) or description" class="form-control">
+        <button id="searchBtn" class="btn btn-primary">Search</button>
+    </div>
+    
+    <div class="filter-options">
+        <select id="errorTypeFilter" class="form-control">
+            <option value="">All Error Types</option>
+            <option value="Mechanical">Mechanical</option>
+            <option value="Electrical">Electrical</option>
+            <option value="Hydraulic">Hydraulic</option>
+            <option value="Software">Software</option>
+            <option value="Safety">Safety</option>
+        </select>
+        
+        <select id="severityFilter" class="form-control">
+            <option value="">All Severities</option>
+            <option value="Low">Low</option>
+            <option value="Medium">Medium</option>
+            <option value="High">High</option>
+            <option value="Critical">Critical</option>
+        </select>
+        
+        <button id="clearFilters" class="btn btn-secondary">Clear</button>
+    </div>
+</div>
                     </div>
                 </div>
 
