@@ -281,7 +281,137 @@ class CraneErrorApp {
             mainContent.classList.add('fade-in');
         }
     }
+// main.js - Improved button handling
+class CraneErrorApp {
+    constructor() {
+        this.currentUser = null;
+        this.init();
+    }
 
+    async init() {
+        await this.checkAuthentication();
+        this.setupGlobalEventListeners();
+    }
+
+    setupGlobalEventListeners() {
+        // Improved form submission handling
+        document.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const form = e.target;
+            const submitBtn = form.querySelector('button[type="submit"]');
+            
+            if (submitBtn) {
+                const originalText = submitBtn.innerHTML;
+                this.setButtonLoading(submitBtn, true);
+                
+                try {
+                    // Handle different forms
+                    if (form.id === 'loginForm') {
+                        await this.handleLogin(form);
+                    } else if (form.id === 'signupForm') {
+                        await this.handleSignup(form);
+                    } else if (form.id === 'errorForm') {
+                        await this.handleErrorReport(form);
+                    } else if (form.id === 'quickErrorForm') {
+                        await this.handleQuickError(form);
+                    }
+                } catch (error) {
+                    console.error('Form submission error:', error);
+                    this.showNotification('An error occurred. Please try again.', 'error');
+                } finally {
+                    this.setButtonLoading(submitBtn, false, originalText);
+                }
+            }
+        });
+
+        // Add click handlers for all buttons to prevent double submission
+        document.addEventListener('click', (e) => {
+            if (e.target.tagName === 'BUTTON' && !e.target.disabled) {
+                const button = e.target;
+                if (button.classList.contains('btn') && !button.getAttribute('data-no-loading')) {
+                    setTimeout(() => {
+                        if (button.disabled) {
+                            this.setButtonLoading(button, false);
+                        }
+                    }, 5000); // Auto-reset after 5 seconds
+                }
+            }
+        });
+    }
+
+    setButtonLoading(button, isLoading, originalText = null) {
+        if (isLoading) {
+            button.disabled = true;
+            button.setAttribute('data-original-text', button.innerHTML);
+            button.innerHTML = '<div class="spinner"></div> Processing...';
+        } else {
+            button.disabled = false;
+            button.innerHTML = originalText || button.getAttribute('data-original-text') || 'Submit';
+        }
+    }
+
+    async handleLogin(form) {
+        const formData = new FormData(form);
+        const loginData = {
+            email: formData.get('email'),
+            password: formData.get('password')
+        };
+
+        try {
+            const response = await fetch('/api/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(loginData)
+            });
+
+            const result = await response.json();
+
+            if (response.ok) {
+                this.showNotification('Login successful!', 'success');
+                setTimeout(() => window.location.href = 'dashboard.html', 1000);
+            } else {
+                throw new Error(result.error || 'Login failed');
+            }
+        } catch (error) {
+            this.showNotification(error.message, 'error');
+            throw error;
+        }
+    }
+
+    async handleErrorReport(form) {
+        const formData = new FormData(form);
+        const errorData = {
+            craneId: formData.get('craneId'),
+            errorType: formData.get('errorType'),
+            severity: formData.get('severity'),
+            description: formData.get('description'),
+            location: formData.get('location') || 'Not specified'
+        };
+
+        try {
+            const response = await fetch('/api/errors', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(errorData)
+            });
+
+            if (response.ok) {
+                this.showNotification('Error reported successfully!', 'success');
+                setTimeout(() => window.location.href = 'dashboard.html', 1500);
+            } else {
+                throw new Error('Failed to submit error report');
+            }
+        } catch (error) {
+            this.showNotification(error.message, 'error');
+            throw error;
+        }
+    }
+
+    // ... rest of your existing methods remain the same
+}
+
+// Initialize app
+const app = new CraneErrorApp();
     // Chart functionality for statistics
     renderStatsChart(stats) {
         const ctx = document.getElementById('statsChart');
