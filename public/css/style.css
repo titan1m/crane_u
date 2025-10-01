@@ -1001,33 +1001,38 @@ body {
     margin-bottom: 0.5rem;
 }
 
-/* Auth Page Enhancements */
+/* Auth specific styles */
 .auth-container {
-    min-height: 100vh;
     display: flex;
-    align-items: center;
     justify-content: center;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    align-items: center;
+    min-height: 70vh;
+    padding: 20px;
 }
 
-.auth-form {
+.auth-card {
     background: white;
-    padding: 2rem;
+    padding: 40px;
     border-radius: 10px;
-    box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
     width: 100%;
     max-width: 400px;
 }
 
-.auth-form h2 {
+.auth-subtitle {
+    color: #7f8c8d;
     text-align: center;
-    margin-bottom: 2rem;
-    color: #2c3e50;
+    margin-bottom: 30px;
+}
+
+.btn-block {
+    width: 100%;
+    padding: 12px;
 }
 
 .auth-links {
     text-align: center;
-    margin-top: 1rem;
+    margin-top: 20px;
 }
 
 .auth-links a {
@@ -1039,6 +1044,35 @@ body {
     text-decoration: underline;
 }
 
+.message-container {
+    margin-top: 20px;
+}
+
+.form-group small {
+    display: block;
+    color: #7f8c8d;
+    font-size: 12px;
+    margin-top: 5px;
+}
+
+/* Enhanced form styles */
+.form-group input:focus {
+    border-color: #3498db;
+    outline: none;
+    box-shadow: 0 0 5px rgba(52, 152, 219, 0.3);
+}
+
+/* Status badges */
+.status-open, .status-in-progress, .status-resolved {
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 12px;
+}
+
+.status-open { background: #e74c3c; color: white; }
+.status-in-progress { background: #f39c12; color: white; }
+.status-resolved { background: #27ae60; color: white; }
+   
 /* Animation Classes */
 .fade-in {
     animation: fadeIn 0.6s ease-in;
