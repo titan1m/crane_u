@@ -6,110 +6,63 @@
     <title>Login - Crane Error Finder</title>
     <link rel="stylesheet" href="css/style.css">
 </head>
-<body class="auth-container">
-    <div class="auth-wrapper">
-        <div class="auth-background">
-            <div class="auth-graphics">
-                <div class="floating-crane">🏗️</div>
-                <div class="floating-gear">⚙️</div>
-                <div class="floating-shield">🛡️</div>
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-logo">
+                <h2>Crane Error Finder</h2>
+            </div>
+            <div class="nav-menu">
+                <a href="index.html" class="nav-link">Home</a>
+                <a href="signup.html" class="nav-link auth-link">Sign Up</a>
+                <a href="#" class="nav-link logout-link" onclick="logout()" style="display: none;">Logout</a>
             </div>
         </div>
-        
-        <div class="auth-card">
-            <div class="auth-header">
-                <h1 class="auth-logo">🏗️ CraneError Finder</h1>
-                <p class="auth-subtitle">Sign in to your account</p>
-            </div>
+    </nav>
 
-            <form id="loginForm" class="auth-form">
-                <div class="form-group">
-                    <label for="email" class="form-label">
-                        📧 Email Address
-                    </label>
-                    <input type="email" id="email" name="email" class="form-control" 
-                           placeholder="Enter your email" required>
-                </div>
-
-                <div class="form-group">
-                    <label for="password" class="form-label">
-                        🔒 Password
-                    </label>
-                    <input type="password" id="password" name="password" class="form-control" 
-                           placeholder="Enter your password" required>
-                    <div class="form-options">
-                        <label class="remember-me">
-                            <input type="checkbox"> Remember me
-                        </label>
-                        <a href="#" class="forgot-password">Forgot password?</a>
+    <div class="container">
+        <div class="auth-container">
+            <div class="auth-card">
+                <h2>Login to Your Account</h2>
+                <p class="auth-subtitle">Enter your credentials to access the crane error database</p>
+                
+                <form id="loginForm">
+                    <div class="form-group">
+                        <label for="loginUsername">Username:</label>
+                        <input type="text" id="loginUsername" required placeholder="Enter your username">
                     </div>
+                    <div class="form-group">
+                        <label for="loginPassword">Password:</label>
+                        <input type="password" id="loginPassword" required placeholder="Enter your password">
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-block">Login</button>
+                </form>
+                
+                <div class="auth-links">
+                    <p>Don't have an account? <a href="signup.html">Sign up here</a></p>
+                    <p><a href="index.html">← Back to Home</a></p>
                 </div>
-
-                <button type="submit" class="btn btn-primary btn-auth">
-                    🚀 Sign In
-                </button>
-
-                <div class="auth-divider">
-                    <span>or continue with</span>
-                </div>
-
-                <div class="social-auth">
-                    <button type="button" class="btn btn-social btn-google">
-                        <span>G</span> Google
-                    </button>
-                    <button type="button" class="btn btn-social btn-microsoft">
-                        <span>M</span> Microsoft
-                    </button>
-                </div>
-            </form>
-
-            <div class="auth-footer">
-                <p>Don't have an account? <a href="signup.html" class="auth-link">Sign up here</a></p>
+                
+                <div id="loginMessage" class="message-container"></div>
             </div>
         </div>
     </div>
 
+    <footer class="footer">
+        <p>&copy; 2024 Crane Error Finder. All rights reserved.</p>
+    </footer>
+
+    <script src="js/main.js"></script>
     <script>
-        document.getElementById('loginForm').addEventListener('submit', async function(e) {
+        document.getElementById('loginForm').addEventListener('submit', function(e) {
             e.preventDefault();
-            
-            const submitBtn = e.target.querySelector('button[type="submit"]');
-            const originalText = submitBtn.innerHTML;
-            submitBtn.disabled = true;
-            submitBtn.innerHTML = '<div class="spinner" style="width: 20px; height: 20px; margin-right: 10px;"></div> Signing in...';
-            
-            const formData = new FormData(this);
-            const loginData = {
-                email: formData.get('email'),
-                password: formData.get('password')
-            };
+            login();
+        });
 
-            try {
-                const response = await fetch('/api/login', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(loginData)
-                });
-
-                const result = await response.json();
-
-                if (response.ok) {
-                    submitBtn.innerHTML = '✅ Success! Redirecting...';
-                    setTimeout(() => {
-                        window.location.href = 'dashboard.html';
-                    }, 1000);
-                } else {
-                    throw new Error(result.error || 'Login failed');
-                }
-            } catch (error) {
-                console.error('Login error:', error);
-                submitBtn.innerHTML = '❌ ' + error.message;
-                setTimeout(() => {
-                    submitBtn.disabled = false;
-                    submitBtn.innerHTML = originalText;
-                }, 2000);
+        // Add enter key support
+        document.getElementById('loginPassword').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                login();
             }
         });
     </script>
