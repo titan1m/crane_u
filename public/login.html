@@ -7,64 +7,179 @@
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-    <nav class="navbar">
-        <div class="nav-container">
-            <div class="nav-logo">
-                <h2>Crane Error Finder</h2>
+    <div class="auth-container">
+        <div class="auth-card">
+            <div class="auth-header">
+                <div class="auth-logo">🏗️</div>
+                <h1 class="auth-title">Welcome Back</h1>
+                <p class="auth-subtitle">Sign in to your Crane Error Finder account</p>
             </div>
-            <div class="nav-menu">
-                <a href="index.html" class="nav-link">Home</a>
-                <a href="signup.html" class="nav-link auth-link">Sign Up</a>
-                <a href="#" class="nav-link logout-link" onclick="logout()" style="display: none;">Logout</a>
-            </div>
-        </div>
-    </nav>
 
-    <div class="container">
-        <div class="auth-container">
-            <div class="auth-card">
-                <h2>Login to Your Account</h2>
-                <p class="auth-subtitle">Enter your credentials to access the crane error database</p>
-                
-                <form id="loginForm">
-                    <div class="form-group">
-                        <label for="loginUsername">Username:</label>
-                        <input type="text" id="loginUsername" required placeholder="Enter your username">
+            <form id="loginForm" class="auth-form">
+                <div class="form-group">
+                    <label for="loginUsername" class="form-label">
+                        👤 Username
+                    </label>
+                    <input 
+                        type="text" 
+                        id="loginUsername" 
+                        class="form-control" 
+                        placeholder="Enter your username"
+                        required
+                    >
+                </div>
+
+                <div class="form-group">
+                    <label for="loginPassword" class="form-label">
+                        🔒 Password
+                    </label>
+                    <div style="position: relative;">
+                        <input 
+                            type="password" 
+                            id="loginPassword" 
+                            class="form-control" 
+                            placeholder="Enter your password"
+                            required
+                        >
+                        <button type="button" class="password-toggle" onclick="togglePassword('loginPassword')">
+                            👁️
+                        </button>
                     </div>
-                    <div class="form-group">
-                        <label for="loginPassword">Password:</label>
-                        <input type="password" id="loginPassword" required placeholder="Enter your password">
+                </div>
+
+                <button type="submit" class="btn btn-primary btn-block" id="loginBtn">
+                    <span class="btn-text">Sign In</span>
+                    <div class="loading-dots" style="display: none;">
+                        <div></div><div></div><div></div><div></div>
                     </div>
-                    <button type="submit" class="btn btn-primary btn-block">Login</button>
-                </form>
-                
+                </button>
+
                 <div class="auth-links">
-                    <p>Don't have an account? <a href="signup.html">Sign up here</a></p>
+                    <p>Don't have an account? <a href="signup.html">Create one here</a></p>
                     <p><a href="index.html">← Back to Home</a></p>
                 </div>
-                
+
                 <div id="loginMessage" class="message-container"></div>
+            </form>
+
+            <div class="features-list">
+                <div class="feature-item">
+                    <div class="feature-icon">⚡</div>
+                    <div>
+                        <strong>Quick Error Reporting</strong>
+                        <p>Report crane errors in seconds</p>
+                    </div>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-icon">📊</div>
+                    <div>
+                        <strong>Real-time Analytics</strong>
+                        <p>Monitor crane performance</p>
+                    </div>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-icon">🔧</div>
+                    <div>
+                        <strong>Error Code Database</strong>
+                        <p>Access comprehensive solutions</p>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 
-    <footer class="footer">
-        <p>&copy; 2024 Crane Error Finder. All rights reserved.</p>
-    </footer>
-
     <script src="js/main.js"></script>
     <script>
-        document.getElementById('loginForm').addEventListener('submit', function(e) {
-            e.preventDefault();
-            login();
+        // Password toggle function
+        function togglePassword(inputId) {
+            const input = document.getElementById(inputId);
+            const toggle = input.parentElement.querySelector('.password-toggle');
+            
+            if (input.type === 'password') {
+                input.type = 'text';
+                toggle.textContent = '🔒';
+            } else {
+                input.type = 'password';
+                toggle.textContent = '👁️';
+            }
+        }
+
+        // Enhanced form handling
+        document.addEventListener('DOMContentLoaded', function() {
+            const loginForm = document.getElementById('loginForm');
+            const loginBtn = document.getElementById('loginBtn');
+            const btnText = loginBtn.querySelector('.btn-text');
+            const loadingDots = loginBtn.querySelector('.loading-dots');
+
+            loginForm.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                const username = document.getElementById('loginUsername').value.trim();
+                const password = document.getElementById('loginPassword').value;
+
+                // Validation
+                if (!username || !password) {
+                    showMessage('loginMessage', 'Please fill in all fields', 'error');
+                    return;
+                }
+
+                // Show loading state
+                btnText.style.display = 'none';
+                loadingDots.style.display = 'inline-block';
+                loginBtn.disabled = true;
+
+                try {
+                    const success = await app.login(username, password);
+                    
+                    if (!success) {
+                        // Reset form on failure
+                        document.getElementById('loginPassword').value = '';
+                    }
+                } finally {
+                    // Reset button state
+                    btnText.style.display = 'inline-block';
+                    loadingDots.style.display = 'none';
+                    loginBtn.disabled = false;
+                }
+            });
+
+            // Real-time validation
+            const inputs = loginForm.querySelectorAll('input');
+            inputs.forEach(input => {
+                input.addEventListener('input', function() {
+                    if (this.value.trim()) {
+                        this.style.borderColor = 'var(--success)';
+                    } else {
+                        this.style.borderColor = 'rgba(108, 117, 125, 0.2)';
+                    }
+                });
+            });
+
+            // Enter key support
+            document.getElementById('loginPassword').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    loginForm.dispatchEvent(new Event('submit'));
+                }
+            });
+
+            // Auto-focus username
+            document.getElementById('loginUsername').focus();
         });
 
-        // Add enter key support
-        document.getElementById('loginPassword').addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-                login();
+        // Enhanced message function
+        function showMessage(elementId, message, type = 'info') {
+            const element = document.getElementById(elementId);
+            if (element) {
+                element.innerHTML = `<div class="message ${type}">${message}</div>`;
+                
+                // Auto-hide success messages
+                if (type === 'success') {
+                    setTimeout(() => {
+                        element.innerHTML = '';
+                    }, 3000);
+                }
             }
-        });
+        }
     </script>
 </body>
 </html>
