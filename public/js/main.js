@@ -1,587 +1,485 @@
-// Utility Functions
-function showMessage(elementId, message, type = 'success') {
-    const element = document.getElementById(elementId);
-    if (element) {
-        element.innerHTML = `<div class="message ${type}">${message}</div>`;
-        setTimeout(() => {
-            element.innerHTML = '';
-        }, 5000);
-    }
-}
-
-function showLoading(button) {
-    if (!button) return () => {};
-    
-    const originalText = button.innerHTML;
-    button.innerHTML = '<div class="loading"></div> Processing...';
-    button.disabled = true;
-    return () => {
-        button.innerHTML = originalText;
-        button.disabled = false;
-    };
-}
-
-// Authentication Functions
-async function login() {
-    const username = document.getElementById('loginUsername').value.trim();
-    const password = document.getElementById('loginPassword').value;
-    const button = document.querySelector('#loginForm button');
-    const resetButton = showLoading(button);
-
-    // Basic validation
-    if (!username || !password) {
-        showMessage('loginMessage', 'Please fill in all fields', 'error');
-        resetButton();
-        return;
+// Enhanced main.js with complete functionality
+class App {
+    constructor() {
+        this.baseURL = window.location.origin;
+        this.token = localStorage.getItem('authToken');
+        this.init();
     }
 
-    try {
-        const response = await fetch('/api/login', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ username, password })
-        });
-
-        const data = await response.json();
-
-        if (data.success) {
-            // Store user info in sessionStorage
-            sessionStorage.setItem('isAuthenticated', 'true');
-            sessionStorage.setItem('username', data.user.username);
-            
-            showMessage('loginMessage', 'Login successful! Redirecting...', 'success');
-            setTimeout(() => {
-                window.location.href = 'dashboard.html';
-            }, 1000);
-        } else {
-            showMessage('loginMessage', data.message || 'Login failed', 'error');
-        }
-    } catch (error) {
-        console.error('Login error:', error);
-        showMessage('loginMessage', 'Network error. Please try again.', 'error');
-    } finally {
-        resetButton();
-    }
-}
-
-async function signup() {
-    const username = document.getElementById('signupUsername').value.trim();
-    const email = document.getElementById('signupEmail').value.trim();
-    const password = document.getElementById('signupPassword').value;
-    const confirmPassword = document.getElementById('confirmPassword').value;
-    const button = document.querySelector('#signupForm button');
-    const resetButton = showLoading(button);
-
-    // Validation
-    if (!username || !email || !password || !confirmPassword) {
-        showMessage('signupMessage', 'Please fill in all fields', 'error');
-        resetButton();
-        return;
+    init() {
+        this.setupEventListeners();
+        this.checkAuthStatus();
+        this.updateNavigation();
     }
 
-    if (password !== confirmPassword) {
-        showMessage('signupMessage', 'Passwords do not match', 'error');
-        resetButton();
-        return;
-    }
+    // Authentication Functions
+    async login(username, password) {
+        try {
+            const response = await fetch('/api/login', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ username, password })
+            });
 
-    if (password.length < 6) {
-        showMessage('signupMessage', 'Password must be at least 6 characters long', 'error');
-        resetButton();
-        return;
-    }
+            const data = await response.json();
 
-    try {
-        const response = await fetch('/api/signup', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ username, email, password, confirmPassword })
-        });
-
-        const data = await response.json();
-
-        if (data.success) {
-            // Store user info in sessionStorage
-            sessionStorage.setItem('isAuthenticated', 'true');
-            sessionStorage.setItem('username', data.user.username);
-            
-            showMessage('signupMessage', 'Account created successfully! Redirecting...', 'success');
-            setTimeout(() => {
-                window.location.href = 'dashboard.html';
-            }, 1500);
-        } else {
-            showMessage('signupMessage', data.message || 'Signup failed', 'error');
-        }
-    } catch (error) {
-        console.error('Signup error:', error);
-        showMessage('signupMessage', 'Network error. Please try again.', 'error');
-    } finally {
-        resetButton();
-    }
-}
-
-async function logout() {
-    try {
-        const response = await fetch('/api/logout', { 
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
+            if (data.success) {
+                this.token = data.token;
+                localStorage.setItem('authToken', data.token);
+                localStorage.setItem('user', JSON.stringify(data.user));
+                
+                this.showNotification('Login successful!', 'success');
+                setTimeout(() => {
+                    window.location.href = 'dashboard.html';
+                }, 1000);
+                return true;
+            } else {
+                this.showNotification(data.message || 'Login failed', 'error');
+                return false;
             }
-        });
-        
-        const data = await response.json();
-        
-        if (data.success) {
-            // Clear all stored data
-            sessionStorage.clear();
-            localStorage.clear();
-            window.location.href = 'index.html';
-        } else {
-            console.error('Logout failed:', data.message);
-            // Still clear local data and redirect
-            sessionStorage.clear();
-            localStorage.clear();
-            window.location.href = 'index.html';
+        } catch (error) {
+            console.error('Login error:', error);
+            this.showNotification('Network error. Please try again.', 'error');
+            return false;
         }
-    } catch (error) {
-        console.error('Logout error:', error);
-        // Clear local data anyway and redirect
-        sessionStorage.clear();
-        localStorage.clear();
-        window.location.href = 'index.html';
     }
-}
 
-function isAuthenticated() {
-    return sessionStorage.getItem('isAuthenticated') === 'true';
-}
+    async signup(userData) {
+        try {
+            const response = await fetch('/api/signup', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(userData)
+            });
 
-// Check authentication status on page load
-async function checkAuth() {
-    try {
-        const response = await fetch('/api/auth/status');
-        const data = await response.json();
-        
-        if (data.authenticated) {
-            sessionStorage.setItem('isAuthenticated', 'true');
-            sessionStorage.setItem('username', data.username || 'User');
-        } else {
-            sessionStorage.removeItem('isAuthenticated');
-            sessionStorage.removeItem('username');
+            const data = await response.json();
+
+            if (data.success) {
+                this.token = data.token;
+                localStorage.setItem('authToken', data.token);
+                localStorage.setItem('user', JSON.stringify(data.user));
+                
+                this.showNotification('Account created successfully!', 'success');
+                setTimeout(() => {
+                    window.location.href = 'dashboard.html';
+                }, 1000);
+                return true;
+            } else {
+                this.showNotification(data.message || 'Signup failed', 'error');
+                return false;
+            }
+        } catch (error) {
+            console.error('Signup error:', error);
+            this.showNotification('Network error. Please try again.', 'error');
+            return false;
         }
-        return data.authenticated;
-    } catch (error) {
-        console.error('Auth check failed:', error);
-        // If auth check fails, rely on sessionStorage
-        return isAuthenticated();
     }
-}
 
-// Protect authenticated routes
-async function requireAuth() {
-    const authenticated = await checkAuth();
-    if (!authenticated) {
-        window.location.href = 'login.html';
-        return false;
+    logout() {
+        localStorage.removeItem('authToken');
+        localStorage.removeItem('user');
+        this.token = null;
+        
+        fetch('/api/logout', { 
+            method: 'POST',
+            headers: this.getHeaders()
+        }).catch(console.error);
+        
+        this.showNotification('Logged out successfully', 'success');
+        setTimeout(() => {
+            window.location.href = 'index.html';
+        }, 1000);
     }
-    return true;
-}
 
-// Protect public routes (redirect if already authenticated)
-async function redirectIfAuthenticated() {
-    const authenticated = await checkAuth();
-    if (authenticated && (window.location.pathname.includes('login.html') || 
-                          window.location.pathname.includes('signup.html'))) {
-        window.location.href = 'dashboard.html';
+    async checkAuthStatus() {
+        try {
+            const response = await fetch('/api/auth/status', {
+                headers: this.getHeaders()
+            });
+            
+            const data = await response.json();
+            
+            if (!data.authenticated) {
+                localStorage.removeItem('authToken');
+                localStorage.removeItem('user');
+                this.token = null;
+            }
+            
+            return data.authenticated;
+        } catch (error) {
+            console.error('Auth check failed:', error);
+            return false;
+        }
+    }
+
+    async requireAuth() {
+        const authenticated = await this.checkAuthStatus();
+        if (!authenticated && !this.isPublicPage()) {
+            window.location.href = 'login.html';
+            return false;
+        }
         return true;
     }
-    return false;
-}
 
-// Update navigation based on auth status
-function updateNavigation() {
-    const authLinks = document.querySelectorAll('.auth-link');
-    const userSpan = document.getElementById('username');
-    
-    if (isAuthenticated()) {
-        authLinks.forEach(link => {
-            if (link.textContent === 'Login' || link.textContent === 'Sign Up') {
-                link.style.display = 'none';
-            }
-        });
+    isPublicPage() {
+        return window.location.pathname.includes('login.html') || 
+               window.location.pathname.includes('signup.html') ||
+               window.location.pathname.includes('index.html');
+    }
+
+    getHeaders() {
+        const headers = {
+            'Content-Type': 'application/json'
+        };
         
+        if (this.token) {
+            headers['Authorization'] = `Bearer ${this.token}`;
+        }
+        
+        return headers;
+    }
+
+    // Navigation
+    updateNavigation() {
+        const user = JSON.parse(localStorage.getItem('user') || '{}');
+        const authLinks = document.querySelectorAll('.auth-link');
         const logoutLinks = document.querySelectorAll('.logout-link');
-        logoutLinks.forEach(link => {
-            link.style.display = 'block';
-        });
-        
-        if (userSpan) {
-            userSpan.textContent = sessionStorage.getItem('username') || 'User';
-        }
-    } else {
-        authLinks.forEach(link => {
-            if (link.textContent === 'Login' || link.textContent === 'Sign Up') {
-                link.style.display = 'block';
-            }
-        });
-        
-        const logoutLinks = document.querySelectorAll('.logout-link');
-        logoutLinks.forEach(link => {
-            link.style.display = 'none';
-        });
-    }
-}
+        const userSpans = document.querySelectorAll('[data-user="username"]');
 
-// Error Code Functions
-async function quickSearch() {
-    const code = document.getElementById('quickSearch').value.trim().toUpperCase();
-    if (!code) {
-        showMessage('quickSearchResult', 'Please enter an error code', 'error');
-        return;
-    }
-
-    try {
-        const response = await fetch(`/api/error-codes/${code}`);
-        if (!response.ok) {
-            throw new Error('Error code not found');
-        }
-        
-        const errorCode = await response.json();
-        displayErrorDetails('quickSearchResult', errorCode);
-    } catch (error) {
-        showMessage('quickSearchResult', 'Error code not found. Please check the code and try again.', 'error');
-    }
-}
-
-async function searchErrorCodes() {
-    const code = document.getElementById('searchCode') ? document.getElementById('searchCode').value.trim().toUpperCase() : '';
-    const category = document.getElementById('searchCategory') ? document.getElementById('searchCategory').value : 'All';
-    
-    const params = new URLSearchParams();
-    if (code) params.append('code', code);
-    if (category !== 'All') params.append('category', category);
-
-    try {
-        const response = await fetch(`/api/error-codes?${params}`);
-        const errorCodes = await response.json();
-        displaySearchResults(errorCodes);
-    } catch (error) {
-        console.error('Search error:', error);
-        const container = document.getElementById('searchResults');
-        if (container) {
-            container.innerHTML = '<p class="error-message">Error loading results. Please try again.</p>';
-        }
-    }
-}
-
-function displaySearchResults(errorCodes) {
-    const container = document.getElementById('searchResults');
-    if (!container) return;
-    
-    if (errorCodes.length === 0) {
-        container.innerHTML = '<p class="no-results">No error codes found matching your criteria.</p>';
-        return;
-    }
-
-    container.innerHTML = errorCodes.map(error => `
-        <div class="error-card ${error.severity.toLowerCase()}">
-            <h3>${error.code} - ${error.description}</h3>
-            <p><strong>Severity:</strong> <span class="severity-${error.severity.toLowerCase()}">${error.severity}</span></p>
-            <p><strong>Category:</strong> ${error.category}</p>
-            <p><strong>Solution:</strong> ${error.solution}</p>
-            ${window.location.pathname.includes('dashboard') ? `
-                <button onclick="viewErrorDetails('${error.code}')" class="btn btn-primary">View Details</button>
-            ` : ''}
-        </div>
-    `).join('');
-}
-
-function displayErrorDetails(containerId, errorCode) {
-    const container = document.getElementById(containerId);
-    if (!container) return;
-    
-    container.innerHTML = `
-        <div class="detail-card">
-            <h3>${errorCode.code} - ${errorCode.description}</h3>
-            <p><strong>Severity:</strong> <span class="severity-${errorCode.severity.toLowerCase()}">${errorCode.severity}</span></p>
-            <p><strong>Category:</strong> ${errorCode.category}</p>
-            <p><strong>Solution:</strong> ${errorCode.solution}</p>
-        </div>
-    `;
-}
-
-// Manual Entry Functions
-async function searchManualCode() {
-    const code = document.getElementById('errorCode').value.trim().toUpperCase();
-    if (!code) {
-        showMessage('searchResult', 'Please enter an error code', 'error');
-        return;
-    }
-
-    try {
-        const response = await fetch(`/api/error-codes/${code}`);
-        if (!response.ok) {
-            throw new Error('Error code not found');
-        }
-        
-        const errorCode = await response.json();
-        showErrorDetails(errorCode);
-    } catch (error) {
-        showMessage('searchResult', 'Error code not found. Please check the code and try again.', 'error');
-        const errorDetails = document.getElementById('errorDetails');
-        if (errorDetails) {
-            errorDetails.style.display = 'none';
-        }
-    }
-}
-
-function showErrorDetails(errorCode) {
-    document.getElementById('detailCode').textContent = errorCode.code;
-    document.getElementById('detailDescription').textContent = errorCode.description;
-    document.getElementById('detailSeverity').textContent = errorCode.severity;
-    document.getElementById('detailCategory').textContent = errorCode.category;
-    document.getElementById('detailSolution').textContent = errorCode.solution;
-    
-    document.getElementById('errorDetails').style.display = 'block';
-    const searchResult = document.getElementById('searchResult');
-    if (searchResult) {
-        searchResult.innerHTML = '';
-    }
-}
-
-async function createReport() {
-    const errorCode = document.getElementById('errorCode').value.trim().toUpperCase();
-    const craneModel = document.getElementById('craneModel').value.trim();
-    const location = document.getElementById('location').value.trim();
-    const description = document.getElementById('description').value.trim();
-
-    if (!errorCode || !craneModel || !location) {
-        showMessage('searchResult', 'Please fill in all required fields (Error Code, Crane Model, and Location)', 'error');
-        return;
-    }
-
-    const button = document.querySelector('#reportForm button');
-    const resetButton = showLoading(button);
-
-    try {
-        const response = await fetch('/api/reports', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                errorCode,
-                craneModel,
-                location,
-                description
-            })
-        });
-
-        const data = await response.json();
-
-        if (data.success) {
-            showMessage('searchResult', 'Report created successfully! Redirecting to reports...', 'success');
-            document.getElementById('reportForm').reset();
-            setTimeout(() => {
-                window.location.href = 'reports.html';
-            }, 2000);
+        if (user.username) {
+            authLinks.forEach(link => link.style.display = 'none');
+            logoutLinks.forEach(link => link.style.display = 'block');
+            userSpans.forEach(span => span.textContent = user.username);
         } else {
-            showMessage('searchResult', data.message || 'Failed to create report', 'error');
-        }
-    } catch (error) {
-        console.error('Report creation error:', error);
-        showMessage('searchResult', 'Error creating report. Please try again.', 'error');
-    } finally {
-        resetButton();
-    }
-}
-
-// Reports Functions
-async function loadReports() {
-    if (!await requireAuth()) return;
-    
-    try {
-        const response = await fetch('/api/reports');
-        const reports = await response.json();
-        displayReports(reports);
-    } catch (error) {
-        console.error('Error loading reports:', error);
-        const container = document.getElementById('reportsContainer');
-        if (container) {
-            container.innerHTML = '<p class="error-message">Error loading reports. Please try again.</p>';
+            authLinks.forEach(link => link.style.display = 'block');
+            logoutLinks.forEach(link => link.style.display = 'none');
+            userSpans.forEach(span => span.textContent = 'Guest');
         }
     }
-}
 
-function displayReports(reports) {
-    const container = document.getElementById('reportsContainer');
-    if (!container) return;
-    
-    if (reports.length === 0) {
-        container.innerHTML = '<p class="no-results">No reports found. <a href="manual-entry.html">Create your first report</a></p>';
-        return;
-    }
+    // Notification System
+    showNotification(message, type = 'info') {
+        // Remove existing notifications
+        const existingNotifications = document.querySelectorAll('.app-notification');
+        existingNotifications.forEach(notification => notification.remove());
 
-    container.innerHTML = reports.map(report => `
-        <div class="report-item ${report.status.toLowerCase().replace(' ', '-')}">
-            <h3>Report #${report._id ? report._id.toString().substring(0, 8) : 'N/A'}</h3>
-            <p><strong>Error Code:</strong> ${report.errorCode}</p>
-            <p><strong>Crane Model:</strong> ${report.craneModel}</p>
-            <p><strong>Location:</strong> ${report.location}</p>
-            <p><strong>Status:</strong> <span class="status-${report.status.toLowerCase().replace(' ', '-')}">${report.status}</span></p>
-            <p><strong>Date:</strong> ${new Date(report.createdAt).toLocaleDateString()}</p>
-            ${report.description ? `<p><strong>Notes:</strong> ${report.description}</p>` : ''}
-        </div>
-    `).join('');
-}
-
-// Dashboard Functions
-async function loadDashboardStats() {
-    if (!await requireAuth()) return;
-    
-    try {
-        // Load total error codes
-        const errorResponse = await fetch('/api/error-codes');
-        const errorCodes = await errorResponse.json();
-        const totalErrors = document.getElementById('totalErrors');
-        if (totalErrors) totalErrors.textContent = errorCodes.length;
-
-        // Load user reports
-        const reportsResponse = await fetch('/api/reports');
-        const reports = await reportsResponse.json();
-        const userReports = document.getElementById('userReports');
-        if (userReports) userReports.textContent = reports.length;
+        const notification = document.createElement('div');
+        notification.className = `app-notification notification ${type}`;
+        notification.innerHTML = `
+            <div class="notification-content">
+                <span>${message}</span>
+                <button onclick="this.parentElement.parentElement.remove()">×</button>
+            </div>
+        `;
         
-        // Calculate open issues
-        const openIssues = reports.filter(r => r.status !== 'Resolved').length;
-        const openIssuesElem = document.getElementById('openIssues');
-        if (openIssuesElem) openIssuesElem.textContent = openIssues;
-    } catch (error) {
-        console.error('Error loading dashboard stats:', error);
+        document.body.appendChild(notification);
+        
+        // Auto remove after 5 seconds
+        setTimeout(() => {
+            if (notification.parentElement) {
+                notification.remove();
+            }
+        }, 5000);
+    }
+
+    // Loading States
+    showLoading(button, text = 'Processing...') {
+        if (!button) return () => {};
+        
+        const originalText = button.innerHTML;
+        button.innerHTML = `⏳ ${text}`;
+        button.disabled = true;
+        
+        return () => {
+            button.innerHTML = originalText;
+            button.disabled = false;
+        };
+    }
+
+    // Setup Event Listeners
+    setupEventListeners() {
+        // Login form
+        const loginForm = document.getElementById('loginForm');
+        if (loginForm) {
+            loginForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const username = document.getElementById('loginUsername').value;
+                const password = document.getElementById('loginPassword').value;
+                const button = e.target.querySelector('button[type="submit"]');
+                const resetButton = this.showLoading(button, 'Logging in...');
+                
+                await this.login(username, password);
+                resetButton();
+            });
+        }
+
+        // Signup form
+        const signupForm = document.getElementById('signupForm');
+        if (signupForm) {
+            signupForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const formData = {
+                    username: document.getElementById('signupUsername').value,
+                    email: document.getElementById('signupEmail').value,
+                    password: document.getElementById('signupPassword').value,
+                    confirmPassword: document.getElementById('confirmPassword').value
+                };
+                const button = e.target.querySelector('button[type="submit"]');
+                const resetButton = this.showLoading(button, 'Creating account...');
+                
+                await this.signup(formData);
+                resetButton();
+            });
+        }
+
+        // Logout buttons
+        document.querySelectorAll('[onclick="logout()"]').forEach(button => {
+            button.addEventListener('click', (e) => {
+                e.preventDefault();
+                this.logout();
+            });
+        });
+
+        // Manual error form
+        const errorForm = document.getElementById('errorForm');
+        if (errorForm) {
+            errorForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                await this.submitErrorForm(e);
+            });
+        }
+    }
+
+    // Error Form Submission
+    async submitErrorForm(event) {
+        const form = event.target;
+        const formData = new FormData(form);
+        const errorData = {
+            craneId: formData.get('craneId'),
+            errorType: formData.get('errorType'),
+            severity: formData.get('severity'),
+            description: formData.get('description'),
+            location: formData.get('location') || 'Manual Entry'
+        };
+
+        const button = form.querySelector('button[type="submit"]');
+        const resetButton = this.showLoading(button, 'Submitting report...');
+
+        try {
+            const response = await fetch('/api/errors', {
+                method: 'POST',
+                headers: this.getHeaders(),
+                body: JSON.stringify(errorData)
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                this.showNotification('Error reported successfully!', 'success');
+                form.reset();
+                setTimeout(() => {
+                    window.location.href = 'reports.html';
+                }, 1500);
+            } else {
+                this.showNotification(data.message || 'Failed to report error', 'error');
+            }
+        } catch (error) {
+            console.error('Error submission failed:', error);
+            this.showNotification('Network error. Please try again.', 'error');
+        } finally {
+            resetButton();
+        }
+    }
+
+    // Dashboard Functions
+    async loadDashboardData() {
+        if (!await this.requireAuth()) return;
+
+        try {
+            // Load stats
+            const statsResponse = await fetch('/api/stats', {
+                headers: this.getHeaders()
+            });
+            const stats = await statsResponse.json();
+
+            // Update stat cards
+            document.getElementById('totalErrors').textContent = stats.totalErrors;
+            document.getElementById('openErrors').textContent = stats.openErrors;
+            document.getElementById('inProgressErrors').textContent = stats.inProgressErrors;
+            document.getElementById('resolvedErrors').textContent = stats.resolvedErrors;
+
+            // Load recent errors
+            const errorsResponse = await fetch('/api/errors?limit=5', {
+                headers: this.getHeaders()
+            });
+            const errorsData = await errorsResponse.json();
+            this.displayRecentErrors(errorsData.errors || errorsData);
+
+        } catch (error) {
+            console.error('Dashboard data loading failed:', error);
+            this.showNotification('Failed to load dashboard data', 'error');
+        }
+    }
+
+    displayRecentErrors(errors) {
+        const container = document.getElementById('recentErrors');
+        if (!container) return;
+
+        if (!errors || errors.length === 0) {
+            container.innerHTML = '<p class="no-data">No recent errors reported</p>';
+            return;
+        }
+
+        container.innerHTML = errors.map(error => `
+            <div class="error-item">
+                <div class="error-details">
+                    <h4>${error.craneId} - ${error.errorType}</h4>
+                    <p>${error.description}</p>
+                    <div class="error-meta">
+                        <span class="badge badge-${error.severity.toLowerCase()}">${error.severity}</span>
+                        <span class="badge badge-${error.status.toLowerCase().replace(' ', '-')}">${error.status}</span>
+                        <span>${new Date(error.reportedAt).toLocaleDateString()}</span>
+                    </div>
+                </div>
+                <div class="error-actions">
+                    <button class="btn btn-sm" onclick="app.viewErrorDetails('${error.id}')">View</button>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    viewErrorDetails(errorId) {
+        // Navigate to reports page with filter for this error
+        window.location.href = `reports.html?error=${errorId}`;
+    }
+
+    // Reports Functions
+    async loadReports() {
+        if (!await this.requireAuth()) return;
+
+        try {
+            const response = await fetch('/api/errors', {
+                headers: this.getHeaders()
+            });
+            const data = await response.json();
+            const errors = data.errors || data;
+            
+            this.displayAllReports(errors);
+            this.updateReportsSummary(errors);
+
+        } catch (error) {
+            console.error('Reports loading failed:', error);
+            this.showNotification('Failed to load reports', 'error');
+        }
+    }
+
+    displayAllReports(errors) {
+        const container = document.getElementById('allErrors');
+        if (!container) return;
+
+        if (!errors || errors.length === 0) {
+            container.innerHTML = '<div class="empty-state"><p>No errors reported yet</p></div>';
+            return;
+        }
+
+        container.innerHTML = errors.map(error => `
+            <div class="error-item">
+                <div class="error-details">
+                    <h4>${error.craneId}</h4>
+                    <p class="error-description">${error.description}</p>
+                    <div class="error-meta">
+                        <span><strong>Type:</strong> ${error.errorType}</span>
+                        <span><strong>Severity:</strong> 
+                            <span class="badge badge-${error.severity.toLowerCase()}">${error.severity}</span>
+                        </span>
+                        <span><strong>Status:</strong> 
+                            <span class="badge badge-${error.status.toLowerCase().replace(' ', '-')}">${error.status}</span>
+                        </span>
+                        <span><strong>Location:</strong> ${error.location}</span>
+                        <span><strong>Reported:</strong> ${new Date(error.reportedAt).toLocaleDateString()}</span>
+                    </div>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    updateReportsSummary(errors) {
+        document.getElementById('totalReports').textContent = errors.length;
+        document.getElementById('filteredResults').textContent = errors.length;
+        
+        // Calculate average resolution time (mock data for now)
+        document.getElementById('avgResolution').textContent = '4h';
     }
 }
 
-// Utility Functions for Settings
-function clearUserData() {
-    if (confirm('Are you sure you want to clear all local data? This will log you out.')) {
-        sessionStorage.clear();
-        localStorage.clear();
-        alert('Local data cleared successfully. Redirecting to login...');
-        window.location.href = 'login.html';
+// Initialize app
+const app = new App();
+
+// Global functions for HTML onclick handlers
+function logout() {
+    app.logout();
+}
+
+function login() {
+    const username = document.getElementById('loginUsername')?.value;
+    const password = document.getElementById('loginPassword')?.value;
+    if (username && password) {
+        app.login(username, password);
     }
 }
 
-function exportUserData() {
-    alert('Export functionality will be implemented in a future update.');
-}
-
-// Recent Errors and Suggestions
-async function loadRecentErrors() {
-    try {
-        const response = await fetch('/api/error-codes?limit=5');
-        const errorCodes = await response.json();
-        displayRecentErrors(errorCodes);
-    } catch (error) {
-        console.error('Error loading recent errors:', error);
+function signup() {
+    const username = document.getElementById('signupUsername')?.value;
+    const email = document.getElementById('signupEmail')?.value;
+    const password = document.getElementById('signupPassword')?.value;
+    const confirmPassword = document.getElementById('confirmPassword')?.value;
+    
+    if (username && email && password && confirmPassword) {
+        app.signup({ username, email, password, confirmPassword });
     }
 }
 
-function displayRecentErrors(errorCodes) {
-    const container = document.getElementById('recentErrors');
-    if (!container || errorCodes.length === 0) return;
-
-    container.innerHTML = errorCodes.map(error => `
-        <div class="error-card">
-            <h4>${error.code}</h4>
-            <p>${error.description}</p>
-            <button onclick="window.location.href='manual-entry.html?code=${error.code}'" class="btn btn-primary">
-                View Details
-            </button>
-        </div>
-    `).join('');
-}
-
-async function loadSuggestedCodes() {
-    try {
-        const response = await fetch('/api/error-codes?limit=6');
-        const errorCodes = await response.json();
-        displaySuggestedCodes(errorCodes);
-    } catch (error) {
-        console.error('Error loading suggested codes:', error);
-    }
-}
-
-function displaySuggestedCodes(errorCodes) {
-    const container = document.getElementById('suggestedCodes');
-    if (!container || errorCodes.length === 0) return;
-
-    container.innerHTML = errorCodes.map(error => `
-        <div class="code-card" onclick="document.getElementById('errorCode').value='${error.code}'; searchManualCode()">
-            <h4>${error.code}</h4>
-            <p>${error.description}</p>
-            <span class="severity-badge ${error.severity.toLowerCase()}">${error.severity}</span>
-        </div>
-    `).join('');
-}
-
-// View Error Details (for dashboard)
-function viewErrorDetails(code) {
-    window.location.href = `manual-entry.html?code=${code}`;
-}
-
-// Initialize page based on authentication
+// Page-specific initializations
 document.addEventListener('DOMContentLoaded', function() {
-    // Add enhanced styles
-    const style = document.createElement('style');
-    style.textContent = `
-        .severity-high { color: #e74c3c; font-weight: bold; }
-        .severity-medium { color: #f39c12; font-weight: bold; }
-        .severity-low { color: #27ae60; font-weight: bold; }
-        .severity-critical { color: #8e44ad; font-weight: bold; }
+    // Dashboard page
+    if (window.location.pathname.includes('dashboard.html')) {
+        app.loadDashboardData();
         
-        .severity-badge {
-            padding: 4px 12px;
-            border-radius: 15px;
-            font-size: 12px;
-            color: white;
-            font-weight: bold;
+        // Refresh button
+        const refreshBtn = document.getElementById('refreshBtn');
+        if (refreshBtn) {
+            refreshBtn.addEventListener('click', () => app.loadDashboardData());
         }
-        .severity-badge.high { background: #e74c3c; }
-        .severity-badge.medium { background: #f39c12; }
-        .severity-badge.low { background: #27ae60; }
-        .severity-badge.critical { background: #8e44ad; }
-        
-        .status-open { color: #e74c3c; font-weight: bold; }
-        .status-in-progress { color: #f39c12; font-weight: bold; }
-        .status-resolved { color: #27ae60; font-weight: bold; }
-        
-        .error-message { color: #e74c3c; text-align: center; padding: 20px; }
-        .no-results { color: #7f8c8d; text-align: center; padding: 20px; }
-        
-        .logout-link { display: none; }
-    `;
-    document.head.appendChild(style);
-    
-    // Update navigation
-    updateNavigation();
-    
-    // Check auth for public pages
-    if (window.location.pathname.includes('login.html') || 
-        window.location.pathname.includes('signup.html')) {
-        redirectIfAuthenticated();
     }
-    
-    // Check auth for protected pages
-    if (window.location.pathname.includes('dashboard.html') ||
-        window.location.pathname.includes('entry-mode.html') ||
-        window.location.pathname.includes('reports.html') ||
-        window.location.pathname.includes('settings.html') ||
-        window.location.pathname.includes('manual-entry.html') ||
-        window.location.pathname.includes('qr-scanner.html')) {
-        requireAuth();
+
+    // Reports page
+    if (window.location.pathname.includes('reports.html')) {
+        app.loadReports();
+        
+        // Filter form
+        const filterForm = document.getElementById('filterForm');
+        if (filterForm) {
+            filterForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                // Filter functionality would go here
+                app.showNotification('Filters applied', 'success');
+            });
+        }
+
+        // Clear filters
+        const clearFilters = document.getElementById('clearFilters');
+        if (clearFilters) {
+            clearFilters.addEventListener('click', () => {
+                document.getElementById('filterForm').reset();
+                app.loadReports();
+            });
+        }
     }
+
+    // Update navigation on all pages
+    app.updateNavigation();
 });
