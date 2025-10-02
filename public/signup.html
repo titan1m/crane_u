@@ -7,74 +7,278 @@
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-    <nav class="navbar">
-        <div class="nav-container">
-            <div class="nav-logo">
-                <h2>Crane Error Finder</h2>
+    <div class="auth-container">
+        <div class="auth-card">
+            <div class="auth-header">
+                <div class="auth-logo">🏗️</div>
+                <h1 class="auth-title">Create Account</h1>
+                <p class="auth-subtitle">Join Crane Error Finder today</p>
             </div>
-            <div class="nav-menu">
-                <a href="index.html" class="nav-link">Home</a>
-                <a href="login.html" class="nav-link auth-link">Login</a>
-                <a href="#" class="nav-link logout-link" onclick="logout()" style="display: none;">Logout</a>
-            </div>
-        </div>
-    </nav>
 
-    <div class="container">
-        <div class="auth-container">
-            <div class="auth-card">
-                <h2>Create New Account</h2>
-                <p class="auth-subtitle">Join us to access the complete crane error database</p>
-                
-                <form id="signupForm">
-                    <div class="form-group">
-                        <label for="signupUsername">Username:</label>
-                        <input type="text" id="signupUsername" required placeholder="Choose a username">
-                        <small>Username must be unique</small>
+            <form id="signupForm" class="auth-form">
+                <div class="form-group">
+                    <label for="signupUsername" class="form-label">
+                        👤 Username
+                    </label>
+                    <input 
+                        type="text" 
+                        id="signupUsername" 
+                        class="form-control" 
+                        placeholder="Choose a username"
+                        required
+                    >
+                    <small class="form-help">Must be unique and 3-20 characters</small>
+                </div>
+
+                <div class="form-group">
+                    <label for="signupEmail" class="form-label">
+                        📧 Email Address
+                    </label>
+                    <input 
+                        type="email" 
+                        id="signupEmail" 
+                        class="form-control" 
+                        placeholder="Enter your email"
+                        required
+                    >
+                </div>
+
+                <div class="form-group">
+                    <label for="signupPassword" class="form-label">
+                        🔒 Password
+                    </label>
+                    <div style="position: relative;">
+                        <input 
+                            type="password" 
+                            id="signupPassword" 
+                            class="form-control" 
+                            placeholder="Create a password"
+                            required
+                        >
+                        <button type="button" class="password-toggle" onclick="togglePassword('signupPassword')">
+                            👁️
+                        </button>
                     </div>
-                    <div class="form-group">
-                        <label for="signupEmail">Email:</label>
-                        <input type="email" id="signupEmail" required placeholder="Enter your email">
+                    <small class="form-help">Must be at least 6 characters long</small>
+                </div>
+
+                <div class="form-group">
+                    <label for="confirmPassword" class="form-label">
+                        ✅ Confirm Password
+                    </label>
+                    <div style="position: relative;">
+                        <input 
+                            type="password" 
+                            id="confirmPassword" 
+                            class="form-control" 
+                            placeholder="Confirm your password"
+                            required
+                        >
+                        <button type="button" class="password-toggle" onclick="togglePassword('confirmPassword')">
+                            👁️
+                        </button>
                     </div>
-                    <div class="form-group">
-                        <label for="signupPassword">Password:</label>
-                        <input type="password" id="signupPassword" required placeholder="Create a password">
-                        <small>Password must be at least 6 characters long</small>
+                </div>
+
+                <button type="submit" class="btn btn-primary btn-block" id="signupBtn">
+                    <span class="btn-text">Create Account</span>
+                    <div class="loading-dots" style="display: none;">
+                        <div></div><div></div><div></div><div></div>
                     </div>
-                    <div class="form-group">
-                        <label for="confirmPassword">Confirm Password:</label>
-                        <input type="password" id="confirmPassword" required placeholder="Confirm your password">
-                    </div>
-                    <button type="submit" class="btn btn-primary btn-block">Create Account</button>
-                </form>
-                
+                </button>
+
                 <div class="auth-links">
-                    <p>Already have an account? <a href="login.html">Login here</a></p>
+                    <p>Already have an account? <a href="login.html">Sign in here</a></p>
                     <p><a href="index.html">← Back to Home</a></p>
                 </div>
-                
+
                 <div id="signupMessage" class="message-container"></div>
+            </form>
+
+            <div class="features-list">
+                <div class="feature-item">
+                    <div class="feature-icon">🚀</div>
+                    <div>
+                        <strong>Get Started Quickly</strong>
+                        <p>Setup your account in minutes</p>
+                    </div>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-icon">📱</div>
+                    <div>
+                        <strong>Mobile Friendly</strong>
+                        <p>Access from any device</p>
+                    </div>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-icon">🛡️</div>
+                    <div>
+                        <strong>Secure & Private</strong>
+                        <p>Your data is protected</p>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 
-    <footer class="footer">
-        <p>&copy; 2024 Crane Error Finder. All rights reserved.</p>
-    </footer>
-
     <script src="js/main.js"></script>
     <script>
-        document.getElementById('signupForm').addEventListener('submit', function(e) {
-            e.preventDefault();
-            signup();
+        // Password toggle function
+        function togglePassword(inputId) {
+            const input = document.getElementById(inputId);
+            const toggle = input.parentElement.querySelector('.password-toggle');
+            
+            if (input.type === 'password') {
+                input.type = 'text';
+                toggle.textContent = '🔒';
+            } else {
+                input.type = 'password';
+                toggle.textContent = '👁️';
+            }
+        }
+
+        // Enhanced form handling
+        document.addEventListener('DOMContentLoaded', function() {
+            const signupForm = document.getElementById('signupForm');
+            const signupBtn = document.getElementById('signupBtn');
+            const btnText = signupBtn.querySelector('.btn-text');
+            const loadingDots = signupBtn.querySelector('.loading-dots');
+
+            // Password strength indicator
+            const passwordInput = document.getElementById('signupPassword');
+            const confirmInput = document.getElementById('confirmPassword');
+
+            passwordInput.addEventListener('input', function() {
+                checkPasswordStrength(this.value);
+                validatePasswordMatch();
+            });
+
+            confirmInput.addEventListener('input', validatePasswordMatch);
+
+            function checkPasswordStrength(password) {
+                const strength = document.getElementById('passwordStrength') || createStrengthIndicator();
+                
+                let strengthText = 'Weak';
+                let strengthColor = '#f72585';
+                
+                if (password.length >= 8) {
+                    strengthText = 'Good';
+                    strengthColor = '#f8961e';
+                }
+                
+                if (password.length >= 10 && /[A-Z]/.test(password) && /[0-9]/.test(password)) {
+                    strengthText = 'Strong';
+                    strengthColor = '#4cc9f0';
+                }
+                
+                if (password.length >= 12 && /[A-Z]/.test(password) && /[0-9]/.test(password) && /[^A-Za-z0-9]/.test(password)) {
+                    strengthText = 'Very Strong';
+                    strengthColor = '#27ae60';
+                }
+
+                strength.textContent = `Password strength: ${strengthText}`;
+                strength.style.color = strengthColor;
+            }
+
+            function createStrengthIndicator() {
+                const strength = document.createElement('small');
+                strength.id = 'passwordStrength';
+                strength.className = 'form-help';
+                strength.style.marginTop = '0.25rem';
+                strength.style.display = 'block';
+                passwordInput.parentElement.appendChild(strength);
+                return strength;
+            }
+
+            function validatePasswordMatch() {
+                const password = passwordInput.value;
+                const confirm = confirmInput.value;
+                
+                if (confirm && password !== confirm) {
+                    confirmInput.style.borderColor = '#f72585';
+                } else if (confirm) {
+                    confirmInput.style.borderColor = '#27ae60';
+                }
+            }
+
+            signupForm.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                const formData = {
+                    username: document.getElementById('signupUsername').value.trim(),
+                    email: document.getElementById('signupEmail').value.trim(),
+                    password: document.getElementById('signupPassword').value,
+                    confirmPassword: document.getElementById('confirmPassword').value
+                };
+
+                // Validation
+                if (!formData.username || !formData.email || !formData.password || !formData.confirmPassword) {
+                    showMessage('signupMessage', 'Please fill in all fields', 'error');
+                    return;
+                }
+
+                if (formData.password !== formData.confirmPassword) {
+                    showMessage('signupMessage', 'Passwords do not match', 'error');
+                    return;
+                }
+
+                if (formData.password.length < 6) {
+                    showMessage('signupMessage', 'Password must be at least 6 characters long', 'error');
+                    return;
+                }
+
+                // Show loading state
+                btnText.style.display = 'none';
+                loadingDots.style.display = 'inline-block';
+                signupBtn.disabled = true;
+
+                try {
+                    await app.signup(formData);
+                } finally {
+                    // Reset button state
+                    btnText.style.display = 'inline-block';
+                    loadingDots.style.display = 'none';
+                    signupBtn.disabled = false;
+                }
+            });
+
+            // Real-time validation
+            const inputs = signupForm.querySelectorAll('input');
+            inputs.forEach(input => {
+                input.addEventListener('input', function() {
+                    if (this.value.trim()) {
+                        this.style.borderColor = 'var(--success)';
+                    } else {
+                        this.style.borderColor = 'rgba(108, 117, 125, 0.2)';
+                    }
+                });
+            });
+
+            // Enter key support
+            document.getElementById('confirmPassword').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    signupForm.dispatchEvent(new Event('submit'));
+                }
+            });
+
+            // Auto-focus username
+            document.getElementById('signupUsername').focus();
         });
 
-        // Add enter key support
-        document.getElementById('confirmPassword').addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-                signup();
+        // Enhanced message function
+        function showMessage(elementId, message, type = 'info') {
+            const element = document.getElementById(elementId);
+            if (element) {
+                element.innerHTML = `<div class="message ${type}">${message}</div>`;
+                
+                // Auto-hide success messages
+                if (type === 'success') {
+                    setTimeout(() => {
+                        element.innerHTML = '';
+                    }, 3000);
+                }
             }
-        });
+        }
     </script>
 </body>
 </html>
